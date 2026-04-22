@@ -1,0 +1,9 @@
+/* Timeline playback button group — centres the buttons and rounds the last one. */
+.scalargis-timeline.p-inputgroup {
+    justify-content: center;
+}
+
+.scalargis-timeline.p-inputgroup button:last-child {
+    border-top-right-radius: 4px !important;
+    border-bottom-right-radius: 4px !important;
+}

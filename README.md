@@ -1,4 +1,4 @@
-# Timeline Component — Enhanced Edition
+# Timeline Component - Enhanced Edition
 
 This is an enhanced version of the ScalarGIS `Timeline` component
 (`packages/components/src/Timeline/src`).

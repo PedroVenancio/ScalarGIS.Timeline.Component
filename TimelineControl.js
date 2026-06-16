@@ -572,12 +572,50 @@ export default function TimelineControl({
   // ─── Effects ─────────────────────────────────────────────────────────────────
 
   // Resolve OpenLayers layer objects for all controlled themes.
+  //
+  // Re-runs when:
+  //   - themes change (layer added/removed from the controlled set), OR
+  //   - the order of layers in the TOC changes via drag & drop.
+  //
+  // WHY layerOrderKey instead of viewer.config_json.layers:
+  //   The ScalarGIS reducer mutates the layers array in-place when reordering
+  //   (layers_update_theme dispatches individual theme updates, not a full
+  //   array replacement). React compares useEffect dependencies by reference
+  //   (===), so the same mutated array object is never detected as changed and
+  //   the effect never re-fires after a drag. We derive layerOrderKey — a
+  //   string that concatenates all layer IDs in their current order — which
+  //   is a new primitive value every time the order changes, giving React a
+  //   reliable signal to re-run the effect.
+  //
+  // After re-resolving, TIME is immediately re-applied to the refreshed OL
+  // layer objects so the layers show the correct temporal position without
+  // waiting for the next currentDate state change.
+  // layerOrderKey captures the order of layers within all group layers (children arrays).
+  // When a layer is dragged in the TOC, the ScalarGIS reducer updates the children
+  // array of the parent group (e.g. "main") — it does NOT change the top-level
+  // viewer.config_json.layers array or any zIndex/order field. We therefore build
+  // the key from all children arrays concatenated, which produces a new string
+  // value on every drag and gives React a reliable signal to re-run the effect.
+  const layerOrderKey = (viewer?.config_json?.layers || [])
+    .map(l => Array.isArray(l.children) ? l.id + ':' + l.children.join('-') : l.id)
+    .join(',');
+
   useEffect(() => {
     if (!mainMap || !themes?.length) return;
     controlLayers.current = themes
       .map(t => ({ layer: utils.findOlLayer(mainMap, t?.id), theme: t }))
       .filter(e => !!e.layer);
-  }, [themes]);
+
+    if (currentDate) {
+      const snapped = snapToNearest(currentDate, dimension);
+      controlLayers.current.forEach(({ layer, theme }) => {
+        updateLayerTime(layer, snapped, theme.type);
+        const originalOpacity = typeof theme.opacity === 'number' ? theme.opacity : 1;
+        applyLayerRangeOpacity(layer, snapped, theme, originalOpacity);
+      });
+    }
+  }, [themes, layerOrderKey]);
+
 
   // Set the default active step from the first stepOption entry.
   useEffect(() => {

@@ -471,8 +471,19 @@ export default function Main(props) {
 
     const url = buildCapabilitiesUrl(theme);
 
+    // Abort the request if the server does not respond within the configured
+    // timeout (config_json.capabilitiesTimeout, default 10 seconds).
+    // This prevents the widget from stalling for minutes when a server is
+    // unreachable or a proxy returns a delayed 504. The Promise.all in
+    // refreshDimension will still resolve with whatever other servers replied
+    // in time, so the widget populates with the available data immediately.
+    const timeoutSecs = component_cfg?.capabilitiesTimeout ?? 10;
+    const controller  = new AbortController();
+    const timeoutId   = setTimeout(() => controller.abort(), timeoutSecs * 1000);
+
     try {
-      const res = await fetch(url);
+      const res = await fetch(url, { signal: controller.signal });
+      clearTimeout(timeoutId);
       if (!res.ok) throw new Error(`HTTP ${res.status} ${res.statusText}`);
       const text = await res.text();
 
@@ -515,7 +526,12 @@ export default function Main(props) {
       return null;
 
     } catch (error) {
-      console.warn(`[Timeline] GetCapabilities failed for "${theme.id}":`, error.message);
+      clearTimeout(timeoutId);
+      if (error.name === 'AbortError') {
+        console.warn(`[Timeline] GetCapabilities timed out for "${theme.id}" after ${timeoutSecs}s — skipping.`);
+      } else {
+        console.warn(`[Timeline] GetCapabilities failed for "${theme.id}":`, error.message);
+      }
       return null;
     }
   }

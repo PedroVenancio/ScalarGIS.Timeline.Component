@@ -9,7 +9,7 @@ Original source files:
 - [config.example.json](https://raw.githubusercontent.com/scalargis/scalargis-client/refs/heads/main/packages/components/src/Timeline/src/config.example.json)
 - [style.css](https://raw.githubusercontent.com/scalargis/scalargis-client/refs/heads/main/packages/components/src/Timeline/src/style.css)
 
-Also modified: `packages/viewer/src/core/models/FeatureInfo.js`
+Also modified: `scalargis-client/packages/viewer/src/core/map_control/FeatureInfo.js`
 (TIME dimension injection into WMTS GetFeatureInfo requests).
 
 ---

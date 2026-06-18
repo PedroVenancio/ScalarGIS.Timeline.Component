@@ -1,0 +1,15 @@
+diff --git a/packages/components/src/Print/src/PrintPanelItem.js b/packages/components/src/Print/src/PrintPanelItem.js
+index 42db4c4..4d302c9 100644
+--- a/packages/components/src/Print/src/PrintPanelItem.js
++++ b/packages/components/src/Print/src/PrintPanelItem.js
+@@ -289,8 +289,8 @@ export default function PrintPanelItem(props) {
+     const wmsLayers = getWMSVisibleLayers(mainMap) || [];
+     const arcgisLayers = getArcGISVisibleLayers(mainMap) || [];
+     const allLayers = [
+-      ...wmsLayers.map(l => 'wms' + ';' + l.url + ';' + l.params.LAYERS + ';' + l.opacity + ';' + l.minScale + ';' + l.maxScale + ';' + (l.params.CQL_FILTER || '') + ';' + (l.params.STYLES || l.params.STYLE || '') + ';' + (l.params.FORMAT || '') + ';' + (l.additional_parameters || '')),
+-      ...arcgisLayers.map(l => 'esri_rest' + ';' + l.url + ';' + l.params.LAYERS + ';' + l.opacity + ';' + l.minScale + ';' + l.maxScale + ';' + (l.params.CQL_FILTER || '') + ';' + (l.params.STYLES || l.params.STYLE || '') + ';' + (l.params.FORMAT || '') + ';' + (l.additional_parameters || '')),
++      ...wmsLayers.map(l => 'wms' + ';' + l.url + ';' + l.params.LAYERS + ';' + l.opacity + ';' + l.minScale + ';' + l.maxScale + ';' + (l.params.CQL_FILTER || '') + ';' + (l.params.STYLES || l.params.STYLE || '') + ';' + (l.params.FORMAT || '') + ';' + (l.additional_parameters || '') + ';' + (l.params.TIME || '')),
++      ...arcgisLayers.map(l => 'esri_rest' + ';' + l.url + ';' + l.params.LAYERS + ';' + l.opacity + ';' + l.minScale + ';' + l.maxScale + ';' + (l.params.CQL_FILTER || '') + ';' + (l.params.STYLES || l.params.STYLE || '') + ';' + (l.params.FORMAT || '') + ';' + (l.additional_parameters || '') + ';' + (l.params.TIME || '')),
+     ];
+ 
+     if (allLayers.length) {

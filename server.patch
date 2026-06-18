@@ -1,0 +1,107 @@
+diff --git a/scalargis/app/modules/print/controllers.py b/scalargis/app/modules/print/controllers.py
+index 865d840..0ac45a7 100644
+--- a/scalargis/app/modules/print/controllers.py
++++ b/scalargis/app/modules/print/controllers.py
+@@ -425,6 +425,7 @@ def viewer_generate_pdf(code, user):
+             wms_format = None
+             opacity = 1
+             additional_parameters = None
++            time = None
+             
+             if len(l.split(';')) > 4:
+                 min_scale = float(l.split(';')[4])
+@@ -442,9 +443,12 @@ def viewer_generate_pdf(code, user):
+             if len(l.split(';')) > 9:
+                 additional_parameters = l.split(';')[9]
+ 
++            if len(l.split(';')) > 10:
++                time = l.split(';')[10]
++
+             if (min_scale == 0 or scale <= min_scale) and (max_scale == 0 or scale >= max_scale):
+                 p.add_map(l.split(';')[0], l.split(';')[1], l.split(';')[2], page_id=100, cql_filter=l.split(';')[6],
+-                          style=wms_style, img_format=wms_format, opacity=opacity, additional_parameters=additional_parameters)
++                          style=wms_style, img_format=wms_format, opacity=opacity, additional_parameters=additional_parameters, time=time)
+ 
+     p.set_wkt_and_center(geomWKT, extentWKT)
+     p.populate_string("planta_id", print_output.print_output_number)
+diff --git a/scalargis/app/utils/pdf_layout.py b/scalargis/app/utils/pdf_layout.py
+index c16aec0..6dbd563 100644
+--- a/scalargis/app/utils/pdf_layout.py
++++ b/scalargis/app/utils/pdf_layout.py
+@@ -192,7 +192,7 @@ class Pdf:
+ 
+ 
+     def add_map(self, serv_type, url, layers, page_id=None, img_format='image/png', quality=2, transparent=True,
+-                cql_filter=None, style=None, opacity=1, additional_parameters=None):
++                cql_filter=None, style=None, opacity=1, additional_parameters=None, time=None):
+         # add map.
+         # serv_type: wms or esri_rest supported
+         # layers: listof  geoserver url
+@@ -200,7 +200,7 @@ class Pdf:
+         # p.add_map('wms','195.95.237.222/geoserver/cm_faro/wms','cm_faro:municipal_ln,cm_faro:equipamentos')
+         # page_id limit to one page. Page_id is an element in json config
+         # quality: factor for wms, dpi for esri_rest
+-        self.maps.append([serv_type, url, layers, page_id, img_format, quality, transparent, cql_filter, style, opacity, additional_parameters])
++        self.maps.append([serv_type, url, layers, page_id, img_format, quality, transparent, cql_filter, style, opacity, additional_parameters, time])
+ 
+     def add_legend(self, url, layer, x, y, width, gs_vendor_option="", serv_type="wms", style="" ):
+         # add service legend
+@@ -606,7 +606,7 @@ class Pdf:
+ 
+                         if scale >= mindenomscale and scale <= maxdenomscale and authorized_format:
+                             self.insert_map('wms', scale, srid, mapcenter[0], mapcenter[1], width, height,
+-                                            dmap[4], ll_x, ll_y, dmap[1], dmap[2], dmap[5], cql_filter=cql_filter, style=style, opacity=opacity, additional_parameters=dmap[10])
++                                            dmap[4], ll_x, ll_y, dmap[1], dmap[2], dmap[5], cql_filter=cql_filter, style=style, opacity=opacity, additional_parameters=dmap[10], time=dmap[11])
+ 
+                             if have_extra_conf:
+                                 try:
+@@ -1533,18 +1533,18 @@ class Pdf:
+ 
+ 
+     def insert_map(self, serv_type, scale, srid, mapcenter_x, mapcenter_y, width, height, img_format,
+-                   ll_x, ll_y, url, layers, quality=2, transparent=True, style=None, cql_filter=None, opacity=1, additional_parameters=None):
++                   ll_x, ll_y, url, layers, quality=2, transparent=True, style=None, cql_filter=None, opacity=1, additional_parameters=None, time=None):
+         # insert map to canvas. Need savepdf() if used without generate
+         xmin, ymin, xmax, ymax = self.calc_bbox(scale, mapcenter_x, mapcenter_y, width, height)
+ 
+         if serv_type == 'wms':
+             img = self.wms_getmap(url, layers, [xmin, ymin, xmax, ymax],
+                                   quality * width * mm, quality * height * mm, srid, img_format, style,
+-                                  cql_filter=cql_filter, opacity=opacity, user=self.user, additional_parameters=additional_parameters)
++                                  cql_filter=cql_filter, opacity=opacity, user=self.user, additional_parameters=additional_parameters, time=time)
+ 
+         elif serv_type == 'esri_rest':
+             img = self.esri_rest_getmap(url, layers, [xmin, ymin, xmax, ymax], width * mm, height * mm, srid,
+-                                        img_format, transparent, quality, opacity=opacity, user=self.user, additional_parameters=additional_parameters)
++                                        img_format, transparent, quality, opacity=opacity, user=self.user, additional_parameters=additional_parameters, time=time)
+         else:
+             logger.warning("Service type not supported.")
+             return
+@@ -1787,7 +1787,7 @@ class Pdf:
+ 
+ 
+     @staticmethod
+-    def wms_getmap(server_url, layers, bbox, width, height, srs, img_format, styles=None, version='1.1.1', cql_filter=None, opacity=1, user=None, additional_parameters=None):
++    def wms_getmap(server_url, layers, bbox, width, height, srs, img_format, styles=None, version='1.1.1', cql_filter=None, opacity=1, user=None, additional_parameters=None, time=None):
+         if styles is None:
+             styles = ''
+ 
+@@ -1817,6 +1817,9 @@ class Pdf:
+         if (additional_parameters):
+             url += '&%s' % additional_parameters
+ 
++        if (time):
++            url += '&time=%s' % time
++
+         logger.info("WMS: " + url)
+         try:
+             img = get_image_with_opacity(url, opacity, user)
+@@ -1860,7 +1863,7 @@ class Pdf:
+ 
+ 
+     @staticmethod
+-    def esri_rest_getmap(server_url, layers, bbox, width, height, srs, imgformat='PNG32', transparent=True, dpi=90, opacity=1, user=None, additional_parameters=None):
++    def esri_rest_getmap(server_url, layers, bbox, width, height, srs, imgformat='PNG32', transparent=True, dpi=90, opacity=1, user=None, additional_parameters=None, time=None):
+         if (server_url[:7] == 'http://') or (server_url[:8] == 'https://'):
+             url = server_url
+         else:

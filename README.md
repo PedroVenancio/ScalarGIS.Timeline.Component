@@ -9,8 +9,9 @@ Original source files:
 - [config.example.json](https://raw.githubusercontent.com/scalargis/scalargis-client/refs/heads/main/packages/components/src/Timeline/src/config.example.json)
 - [style.css](https://raw.githubusercontent.com/scalargis/scalargis-client/refs/heads/main/packages/components/src/Timeline/src/style.css)
 
-Also modified: `scalargis-client/packages/viewer/src/core/map_control/FeatureInfo.js`
-(TIME dimension injection into WMTS GetFeatureInfo requests).
+Also modified: 
+- TIME dimension injection into WMTS GetFeatureInfo requests: `scalargis-client/packages/viewer/src/core/map_control/FeatureInfo.js` 
+- TIME dimension injection into Print component: `scalargis-client/packages/components/src/Print/src/PrintPanelItem.js`, `scalargis-server/scalargis/app/modules/print/controllers.py`, `scalargis-server/scalargis/app/utils/pdf_layout.py`
 
 ---
 
